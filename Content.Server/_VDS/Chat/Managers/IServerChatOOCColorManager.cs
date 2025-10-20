@@ -1,6 +1,7 @@
-﻿namespace Content.Server._VDS.Chat.Managers;
-
-public interface IServerChatOOCColorManager
+namespace Content.Server._VDS.Chat.Managers
 {
-    void Init();
+    public interface IOOCColorManager
+    {
+        void Initialize();
+    }
 }

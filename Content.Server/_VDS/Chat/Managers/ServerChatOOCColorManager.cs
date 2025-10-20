@@ -8,14 +8,14 @@ namespace Content.Server._VDS.Chat.Managers;
 /// <summary>
 /// Manages incoming OOC Color messages, updating the color if valid.
 /// </summary>
-public sealed class ServerChatOOCColorManager : IServerChatOOCColorManager
+public sealed class OOCColorManager : IOOCColorManager
 {
     [Dependency] private readonly IServerDbManager _db = default!;
     [Dependency] private readonly IServerNetManager _netManager = default!;
     [Dependency] private readonly IServerPreferencesManager _prefsMan = default!;
     [Dependency] private readonly IPlayerManager _playerManager = default!;
 
-    public void Init()
+    public void Initialize()
     {
         _netManager.RegisterNetMessage<MsgUpdateOOCColor>(HandleUpdateOOCColorMessage);
     }

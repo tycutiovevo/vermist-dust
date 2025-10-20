@@ -10,7 +10,6 @@ using Content.Client.GhostKick;
 using Content.Client.Guidebook;
 using Content.Client.Input;
 using Content.Client.IoC;
-using Content.Client._VDS.IoC;
 using Content.Client.Launcher;
 using Content.Client.Lobby;
 using Content.Client.MainMenu;
@@ -77,22 +76,24 @@ namespace Content.Client.Entry
         [Dependency] private readonly DebugMonitorManager _debugMonitorManager = default!;
         [Dependency] private readonly TitleWindowManager _titleWindowManager = default!;
         [Dependency] private readonly IEntitySystemManager _entitySystemManager = default!;
-        [Dependency] private readonly IClientChatOOCColorManager _oocColorManager = default!; // VDS
+        [Dependency] private readonly IClientOOCColorManager _oocColorManager = default!; // VDS
         [Dependency] private readonly ClientsidePlaytimeTrackingManager _clientsidePlaytimeManager = default!;
 
-        public override void Init()
+        public override void PreInit()
         {
-            ClientContentIoC.Register();
-            VDSClientContentIoC.Register(); // VDS
+            ClientContentIoC.Register(Dependencies);
 
             foreach (var callback in TestingCallbacks)
             {
                 var cast = (ClientModuleTestingCallbacks) callback;
                 cast.ClientBeforeIoC?.Invoke();
             }
+        }
 
-            IoCManager.BuildGraph();
-            IoCManager.InjectDependencies(this);
+        public override void Init()
+        {
+            Dependencies.BuildGraph();
+            Dependencies.InjectDependencies(this);
 
             _contentLoc.Initialize();
             _componentFactory.DoAutoRegistrations();
