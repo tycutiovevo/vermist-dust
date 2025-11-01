@@ -80,6 +80,7 @@ public sealed partial class ZombieSystem
     private static readonly List<ProtoId<AntagPrototype>> BannableZombiePrototypes = ["Zombie"];
     private static readonly EntProtoId AddOnWoundableZombified = "AddOnWoundableZombified"; // Offbrand
     private static readonly EntProtoId AddOnAnyZombified = "AddOnAnyZombified"; // Offbrand
+    private static readonly string InitialInfectedFaction = "InitialInfectedIgnore"; //imp
 
     /// <summary>
     /// Handles an entity turning into a zombie when they die or go into crit
@@ -297,7 +298,7 @@ public sealed partial class ZombieSystem
 
         _faction.ClearFactions(target, dirty: false);
         _faction.AddFaction(target, ZombieFaction);
-        _faction.AddFaction(target, "InitialInfectedIgnore"); //#IMP: zombies see intial infected as fellow zombies and don't attack
+        _faction.AddFaction(target, InitialInfectedFaction); //#IMP: zombies see intial infected as fellow zombies and don't attack
 
         // Begin Offbrand
         var rejuv = new Content.Shared.Rejuvenate.RejuvenateEvent();
