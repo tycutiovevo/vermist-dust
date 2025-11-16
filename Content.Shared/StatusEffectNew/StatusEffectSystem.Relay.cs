@@ -5,6 +5,8 @@ using Content.Shared.Speech;
 using Content.Shared.StatusEffectNew.Components;
 using Content.Shared.Stunnable;
 using Robust.Shared.Player;
+using Content.Shared.Damage; // imp
+using Content.Shared.Interaction.Events; // imp
 
 namespace Content.Shared.StatusEffectNew;
 
@@ -55,6 +57,8 @@ public sealed partial class StatusEffectsSystem
         SubscribeLocalEvent<StatusEffectContainerComponent, Content.Shared.Damage.DamageChangedEvent>(RelayStatusEffectEvent); // Offbrand
         SubscribeLocalEvent<StatusEffectContainerComponent, Content.Shared.Examine.ExaminedEvent>(RelayStatusEffectEvent); // Offbrand
         SubscribeLocalEvent<StatusEffectContainerComponent, Content.Shared.Verbs.GetVerbsEvent<Content.Shared.Verbs.AlternativeVerb>>(RelayStatusEffectEvent); // Offbrand
+        SubscribeLocalEvent<StatusEffectContainerComponent, DamageModifyEvent>(RelayStatusEffectEvent); // imp
+        SubscribeLocalEvent<StatusEffectContainerComponent, InteractionSuccessEvent>(RefRelayStatusEffectEvent); // imp
     }
 
     private void RefRelayStatusEffectEvent<T>(EntityUid uid, StatusEffectContainerComponent component, ref T args) where T : struct

@@ -34,9 +34,9 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Replays;
 using Robust.Shared.Utility;
+using Content.Shared._Starlight.CollectiveMind; // Starlight - Collective Minds
 using Content.Server._Wizden.Chat.Systems; // Imp edit for Last Message Before Death Webhook
 using Content.Shared.Abilities.Mime; // imp
-using Content.Shared.CollectiveMind; // imp
 
 namespace Content.Server.Chat.Systems;
 
@@ -63,10 +63,10 @@ public sealed partial class ChatSystem : SharedChatSystem
     [Dependency] private readonly ReplacementAccentSystem _wordreplacement = default!;
     [Dependency] private readonly EntityWhitelistSystem _whitelistSystem = default!;
     [Dependency] private readonly ExamineSystemShared _examineSystem = default!;
-    [Dependency] private readonly CollectiveMindUpdateSystem _collectiveMind = default!;
     [Dependency] private readonly IServerPreferencesManager _preferencesManager = default!; // VDS
     [Dependency] private readonly LastMessageBeforeDeathSystem _lastMessageBeforeDeathSystem = default!; // Imp Edit LastMessageBeforeDeath Webhook
     [Dependency] private readonly Content.Shared.StatusEffectNew.StatusEffectsSystem _statusEffects = default!; // Offbrand
+    [Dependency] private readonly CollectiveMindUpdateSystem _collectiveMind = default!; // Starlight - Collective Minds
 
     private bool _loocEnabled = true;
     private bool _deadLoocEnabled;
@@ -183,9 +183,12 @@ public sealed partial class ChatSystem : SharedChatSystem
             return;
         }
 
-        // imp edit, collective mind
+        // Starlight - Start - Collective Minds - It sucks but its required. Try not to think about it.
+        // Original Starlight justification: I despise this being here but there doesn't seem to be a cleaner way to
+        // watch for tags or complete component removals
         if (TryComp<CollectiveMindComponent>(source, out var collective))
             _collectiveMind.UpdateCollectiveMind(source, collective);
+        // Starlight - End
 
         if (player != null && _chatManager.HandleRateLimit(player) != RateLimitStatus.Allowed)
             return;
@@ -261,16 +264,16 @@ public sealed partial class ChatSystem : SharedChatSystem
             }
         }
 
-        // imp edit start
+        // Starlight - Start - Collective Minds
         if (desiredType == InGameICChatType.CollectiveMind)
         {
-            if (TryProccessCollectiveMindMessage(source, message, out var modMessage, out var channel))
+            if (TryProcessCollectiveMindMessage(source, message, out var modMessage, out var channel))
             {
                 SendCollectiveMindChat(source, modMessage, channel);
                 return;
             }
         }
-        // imp edit end
+        // Starlight - End
 
         // Otherwise, send whatever type.
         switch (desiredType)
@@ -437,14 +440,17 @@ public sealed partial class ChatSystem : SharedChatSystem
 
     #region Private API
 
-    // imp edit, collective mind
+    // Starlight - Start - Collective Minds
     private void SendCollectiveMindChat(EntityUid source, string message, CollectiveMindPrototype? collectiveMind)
     {
-        if (_mobStateSystem.IsDead(source) || collectiveMind == null || message == "" || !TryComp<CollectiveMindComponent>(source, out var sourseCollectiveMindComp) || !sourseCollectiveMindComp.Minds.ContainsKey(collectiveMind.ID))
+        if (_mobStateSystem.IsDead(source) || collectiveMind == null || message == "" || !TryComp<CollectiveMindComponent>(source, out var sourceCollectiveMindComp) || !sourceCollectiveMindComp.Minds.ContainsKey(collectiveMind))
             return;
 
-        if (TryComp<MimePowersComponent>(source, out var comp) && comp.Enabled) // No cheating
-            return; // Ideally would display the mime-cant-speak string but doing that here would be messy. Collective mind needs an equivalent to OnSpeakAttempt so this can be handled in MutingSystem
+        if (TryComp<MimePowersComponent>(source, out var comp) && comp.Enabled) // Imp add: no cheating
+        {
+            _popupSystem.PopupEntity(Loc.GetString("mime-cant-speak"), source, source);
+            return;
+        }
 
         var clients = Filter.Empty();
         var mindQuery = EntityQueryEnumerator<CollectiveMindComponent, ActorComponent>();
@@ -453,29 +459,26 @@ public sealed partial class ChatSystem : SharedChatSystem
             if (_mobStateSystem.IsDead(uid))
                 continue;
 
-            if (collectMindComp.Minds.ContainsKey(collectiveMind.ID))
+            if (collectMindComp.Minds.ContainsKey(collectiveMind))
             {
                 clients.AddPlayer(actorComp.PlayerSession);
             }
         }
 
-        var Number = $"{sourseCollectiveMindComp.Minds[collectiveMind.ID]}";
+        var number = $"{sourceCollectiveMindComp.Minds[collectiveMind].MindId}";
 
-        var admins = _adminManager.ActiveAdmins
-            .Select(p => p.Channel);
-        string messageWrap;
-        string adminMessageWrap;
+        // imp edit: deadchat can see hivemind
+        var ghosts = GetDeadChatClients();
 
-        messageWrap = Loc.GetString("collective-mind-chat-wrap-message",
+        var messageWrap = Loc.GetString("collective-mind-chat-wrap-message",
             ("message", message),
             ("channel", collectiveMind.LocalizedName),
-            ("number", Number));
-
-        adminMessageWrap = Loc.GetString("collective-mind-chat-wrap-message-admin",
+            ("number", number));
+        var adminMessageWrap = Loc.GetString("collective-mind-chat-wrap-message-admin",
             ("source", source),
             ("message", message),
             ("channel", collectiveMind.LocalizedName),
-            ("number", Number));
+            ("number", number));
 
         _adminLogger.Add(LogType.Chat, LogImpact.Low, $"CollectiveMind chat from {ToPrettyString(source):Player}: {message}");
 
@@ -495,9 +498,10 @@ public sealed partial class ChatSystem : SharedChatSystem
             source,
             false,
             true,
-            admins,
+            ghosts, // imp admins -> ghosts
             collectiveMind.Color);
     }
+    // Starlight - End
 
     private void SendEntitySpeak(
         EntityUid source,
@@ -719,7 +723,7 @@ public sealed partial class ChatSystem : SharedChatSystem
 
         var wrappedMessage = Loc.GetString("chat-manager-entity-looc-wrap-message",
             ("entityName", name),
-            ("oocColor", color ),
+            ("oocColor", color),
             ("message", FormattedMessage.EscapeText(message)));
 
         SendInVoiceRange(ChatChannel.LOOC, message, wrappedMessage, source, hideChat ? ChatTransmitRange.HideChat : ChatTransmitRange.Normal, player.UserId);
@@ -1102,7 +1106,7 @@ public enum InGameICChatType : byte
     Speak,
     Emote,
     Whisper,
-    CollectiveMind // imp
+    CollectiveMind, // Starlight - Collective Minds
 }
 
 /// <summary>

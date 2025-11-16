@@ -12,6 +12,8 @@ using Content.Shared.Popups;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Atmos.Rotting;
+using Content.Server.Objectives.Components;
+using Content.Server.Light.Components;
 using Content.Shared._Goobstation.Changeling;
 using Content.Shared.Eye.Blinding.Systems;
 using Content.Shared.Eye.Blinding.Components;
@@ -25,6 +27,7 @@ using Content.Shared.Light.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Content.Shared.Mindshield.Components;
+using Content.Shared._Starlight.CollectiveMind; // imp
 
 namespace Content.Server._Goobstation.Changeling;
 
@@ -36,6 +39,7 @@ public sealed partial class GoobChangelingSystem : EntitySystem
     [Dependency] private readonly Content.Shared._Offbrand.Wounds.BrainDamageSystem _brainDamage = default!; // Offbrand
     [Dependency] private readonly Content.Shared._Offbrand.Wounds.HeartSystem _heart = default!; // Offbrand
     [Dependency] private readonly RejuvenateSystem _rejuvenate = default!;
+    [Dependency] private readonly CollectiveMindUpdateSystem _collectiveMind = default!; // imp
 
     public void SubscribeAbilities()
     {
@@ -797,7 +801,9 @@ public sealed partial class GoobChangelingSystem : EntitySystem
             return;
         }
 
+        EnsureComp<CollectiveMindComponent>(uid, out var mind); //imp add
         EnsureComp<GoobHivemindComponent>(uid);
+        _collectiveMind.UpdateCollectiveMind(uid, mind); // imp
 
         _popup.PopupEntity(Loc.GetString("changeling-hivemind-start"), uid, uid);
     }
