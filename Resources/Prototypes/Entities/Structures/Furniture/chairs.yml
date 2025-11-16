@@ -49,6 +49,8 @@
           collection: MetalBreak
   - type: StaticPrice
     price: 50
+  - type: AudioAbsorption # VDS
+    absorption: 12
 
 #Starts unanchored, cannot be rotated while anchored
 - type: entity
