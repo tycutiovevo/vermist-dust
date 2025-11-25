@@ -1,0 +1,18 @@
+- type: entity
+  parent: AmeController
+  id: UnderclockedAmeController
+  name: Underclocked AME controller
+  description: Sips on fuel, but only produces viable power at high injections.
+  components:
+    - type: AmeController
+      underclocked: true
+      updatePeriod: 60
+    - type: Sprite
+      snapCardinals: true
+      sprite: Structures/Power/Generation/ame.rsi
+      state: underclocked_control
+      layers:
+      - state: underclocked_control
+      - state: control_on
+        map: ["display"]
+        visible: false

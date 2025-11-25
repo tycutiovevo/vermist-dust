@@ -119,7 +119,7 @@ public sealed class AmeNodeGroup : BaseNodeGroup
         }
     }
 
-    public float InjectFuel(int fuel, out bool overloading)
+    public float InjectFuel(int fuel, AmeControllerComponent controller, out bool overloading)
     {
         overloading = false;
 
@@ -129,7 +129,18 @@ public sealed class AmeNodeGroup : BaseNodeGroup
 
         var safeFuelLimit = CoreCount * 2;
 
-        var powerOutput = CalculatePower(fuel, CoreCount);
+        // VDS start
+        float powerOutput;
+        if (controller.Underclocked)
+        {
+            powerOutput = CalculateUnderclockedPower(fuel, CoreCount);
+        }
+        else
+        {
+            powerOutput = CalculatePower(fuel, CoreCount);
+        }
+        // VDS end
+
         if (fuel <= safeFuelLimit)
             return powerOutput;
 
@@ -173,12 +184,26 @@ public sealed class AmeNodeGroup : BaseNodeGroup
         // Balanced around a single core AME with injection level 2 producing 120KW.
         // Two core with four injection is 150kW. Two core with two injection is 90kW.
 
-        // Increasing core count creates diminishing returns, increasing injection amount increases 
+        // Increasing core count creates diminishing returns, increasing injection amount increases
         // Unlike the previous solution, increasing fuel and cores always leads to an increase in power, even if by very small amounts.
         // Increasing core count without increasing fuel always leads to reduced power as well.
         // At 18+ cores and 2 inject, the power produced is less than 0, the Max ensures the AME can never produce "negative" power.
         return MathF.Max(200000f * MathF.Log10(2 * fuel * MathF.Pow(cores, (float)-0.5)), 0);
     }
+
+    // VDS start
+    /// <summary>
+    /// Calculates the amount of power an underclocked AME can produce with the given settings
+    /// </summary>
+    public float CalculateUnderclockedPower(int fuel, int cores)
+    {
+        // Essentially the same as CalculatePower, but heavily punishes fuel usage below 20.
+        var fuelPenalty = MathF.Min(fuel / 20f, 1.0f);
+        fuelPenalty *= fuelPenalty; // squared so it's an even harsher penalty.
+
+        return MathF.Max(CalculatePower(fuel, cores) * fuelPenalty, 0);
+    }
+    // VDS end
 
     public int GetTotalStability()
     {

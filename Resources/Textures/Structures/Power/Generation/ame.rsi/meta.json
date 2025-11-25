@@ -87,6 +87,9 @@
     {
       "name": "control"
     },
+    {
+      "name": "underclocked_control"
+    },
 	{
       "name": "static"
     },

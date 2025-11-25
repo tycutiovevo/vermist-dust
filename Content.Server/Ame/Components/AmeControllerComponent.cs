@@ -98,4 +98,13 @@ public sealed partial class AmeControllerComponent : SharedAmeControllerComponen
     /// </summary>
     [DataField]
     public TimeSpan CooldownDuration = TimeSpan.FromSeconds(10f);
+
+    // VDS start
+    /// <summary>
+    /// Whether or not this AME is considered underclocked or not.
+    /// </summary>
+    [DataField]
+    [ViewVariables(VVAccess.ReadWrite)]
+    public bool Underclocked = false;
+    // VDS end
 }
