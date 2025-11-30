@@ -179,8 +179,8 @@
     - Airlocks
     - WirePanels
     - Networking
-  - type: AudioAbsorption # VDS
-    absorption: 30
+  - type: AcousticData # VDS
+    absorption: 10
     reflectRay: true
   placement:
     mode: SnapgridCenter
